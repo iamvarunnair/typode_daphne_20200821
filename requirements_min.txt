@@ -1,0 +1,7 @@
+autopep8
+channels
+channels-redis
+Django
+djangorestframework
+jsonschema
+psycopg2
