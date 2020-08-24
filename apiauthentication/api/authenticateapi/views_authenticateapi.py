@@ -2,8 +2,8 @@ from rest_framework.views import Response
 from functools import wraps
 from ...models import ApiTokens
 from django.core.exceptions import ObjectDoesNotExist
-from main.utilities.utility import read_from_json_file, validate_json
-
+from main.utilities.utility import validate_json_with_schema_from_file
+from rest_framework import status
 
 development_key = '3mLoEPlG2e9lDZxEOfonICpD2iHnAv3h'
 
@@ -12,20 +12,26 @@ def authenticate_api(function):
     @wraps(function)
     def wrapper_authenticate_api(self, request, *args, **kwargs):
         try:
-            read_json = read_from_json_file(
-                'apiauthentication\\api\\authenticateapi\\schema_authenticateapi.json')
-            if request is not None and \
-                'api_details' in request.data and \
-                read_json['status'] == 0 and \
-                    validate_json(read_json['payload'], request.data['api_details'])['status'] == 0:
+            if validate_json_with_schema_from_file(
+                'apiauthentication\\api\\authenticateapi\\schema_authenticateapi.json',
+                request.data['api_details']
+            )['status'] == 0:
                 try:
-                    if ApiTokens.objects.get(token_string__exact=request.data['api_details']['token_key']) and \
+                    if ApiTokens.objects.get(token_string__exact=request.data['api_details']['token_key'], status=1) and \
                             request.data['api_details']['development_key'] == development_key:
+                        request.data['authentication_payload'] = {
+                            'status': 0,
+                            'message': 'Successfully authenticated api.'
+                        }
                         return function(self, request, *args, **kwargs)
+                    else:
+                        raise
                 except ObjectDoesNotExist:
-                    return Response(401)
+                    return Response(status=status.HTTP_401_UNAUTHORIZED)
+                except Exception:
+                    return Response(status=status.HTTP_401_UNAUTHORIZED)
             else:
                 raise
         except Exception as err:
-            return Response(status=400)
+            return Response(status=status.HTTP_400_BAD_REQUEST)
     return wrapper_authenticate_api

@@ -38,4 +38,4 @@ class Profile(models.Model):
     last_modified_date = models.DateTimeField(default=datetime.now)
 
     def __str__(self):
-        return str(self.user_id)
+        return str(self.profile_id)

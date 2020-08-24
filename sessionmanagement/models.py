@@ -25,12 +25,12 @@ class Session(models.Model):
     session_key = models.CharField(max_length=100, default=None)
     login_source = models.CharField(
         max_length=100, default='mobile')  # website/iOS/Android
-    # natice/google/facebook/linkedIn
+    # native/google/facebook/linkedIn
     login_type = models.CharField(max_length=100, default='native')
     # logout from all devices/logout from this device
     logout_type = models.CharField(max_length=100, default='current_session')
     last_activity_time = models.DateTimeField(default=datetime.now)
-    status_id = models.ForeignKey(
+    status = models.ForeignKey(
         SessionStatus, on_delete=models.CASCADE, default=None)
     added_date = models.DateTimeField(default=datetime.now)
     last_modified_date = models.DateTimeField(default=datetime.now)

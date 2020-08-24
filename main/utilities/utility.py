@@ -1,6 +1,7 @@
 from jsonschema import Draft7Validator
 from functools import wraps
 from rest_framework.views import Response
+from rest_framework import status
 import json
 
 """
@@ -49,9 +50,9 @@ schema = {
 """
 
 
-def validate_json(schema, jsonData):
+def validate_json(schema, json_data):
     try:
-        if Draft7Validator(schema).is_valid(jsonData):
+        if Draft7Validator(schema).is_valid(json_data):
             return {
                 'status': 0,
                 'message': 'Successfully validated json with schema',
@@ -65,9 +66,9 @@ def validate_json(schema, jsonData):
         }
 
 
-def validate_request_json(type):
+def validate_request_json(choice):
     """
-    type
+    choice
     0 for prelogin without session_details
     1 for postlogin with session_details
     """
@@ -75,7 +76,7 @@ def validate_request_json(type):
         @wraps(function)
         def wrapper_validate_request_json(self, request, *args, **kwargs):
             try:
-                if type == 0:
+                if choice == 0:
                     schema = {
                         "$schema": "http://json-schema.org/draft-07/schema#",
                         "$id": "http://example.com/product.schema.json",
@@ -87,7 +88,7 @@ def validate_request_json(type):
                         "required": ["api_details", "api_parameters"],
                         "additionalProperties": False,
                     }
-                elif type == 1:
+                elif choice == 1:
                     schema = {
                         "$schema": "http://json-schema.org/draft-07/schema#",
                         "$id": "http://example.com/product.schema.json",
@@ -102,12 +103,14 @@ def validate_request_json(type):
                     }
                 import pdb
                 pdb.set_trace()
-                if request is not None and Draft7Validator(schema).is_valid(request.data):
+                if request is not None and \
+                        request.data is not None and \
+                        Draft7Validator(schema).is_valid(request.data):
                     return function(self, request, *args, **kwargs)
                 else:
                     raise
             except Exception as err:
-                return Response(status=400)
+                return Response(status=status.HTTP_400_BAD_REQUEST)
         return wrapper_validate_request_json
     return decorator_validate_request_json
 
@@ -125,4 +128,18 @@ def read_from_json_file(path):
         return {
             'status': 1,
             'message': f'Failed to load json from {path}',
+        }
+
+
+def validate_json_with_schema_from_file(schema_file_path, json_data):
+    try:
+        read_json = read_from_json_file(schema_file_path)
+        if read_json['status'] == 0:
+            return validate_json(read_json['payload'], json_data)
+        else:
+            return read_json
+    except Exception:
+        return {
+            'status': 1,
+            'message': 'Failed to validate.',
         }
