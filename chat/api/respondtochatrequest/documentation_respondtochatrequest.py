@@ -28,8 +28,8 @@
         "session_key": ""
     },
     "api_parameters": {
-        "request_id"
-        "response": 0,
+        "request_id": 0,
+        "response": 0,          # 0 for accept, 1 for reject
     },
 }
 # ---------------------- End ---------------------- #

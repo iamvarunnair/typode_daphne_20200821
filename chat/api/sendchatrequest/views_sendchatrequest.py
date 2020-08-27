@@ -21,7 +21,7 @@ class SendChatRequestAPI(APIView):
                 'chat\\api\\sendchatrequest\\schema_sendchatrequest.json',
                 request.data['api_parameters']
             )['status'] == 0:
-                output_json['session_payload'] = request.data['session_payload'],
+                output_json['session_payload'] = request.data['session_payload']
                 if ChatRequest.objects.filter(
                     Q(
                         requester_id=request.data['session_details']['profile_id'],

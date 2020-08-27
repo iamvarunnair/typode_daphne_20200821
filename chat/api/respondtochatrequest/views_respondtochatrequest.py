@@ -6,7 +6,7 @@ from sessionmanagement.api.updatesessions.views_updatesessions import update_ses
 from ...models import ChatRequest
 
 
-class SendChatRequestAPI(APIView):
+class RespondToChatRequestAPI(APIView):
     """ Log in profile """
     @validate_request_json(choice=1)
     @authenticate_api
@@ -18,14 +18,15 @@ class SendChatRequestAPI(APIView):
                 'chat\\api\\respondtochatrequest\\schema_respondtochatrequest.json',
                 request.data['api_parameters']
             )['status'] == 0:
-                output_json['session_payload'] = request.data['session_payload'],
+                output_json['session_payload'] = request.data['session_payload']
                 if request.data['api_parameters']['response'] == 0:         # for accepted
                     response = 2
                 elif request.data['api_parameters']['response'] == 1:         # for rejected
                     response = 3
                 if ChatRequest.objects.filter(
                         pk=request.data['api_parameters']['request_id'],
-                        requester_id=request.data['session_details']['profile_id'], status=1).update(status=response):
+                        respondent_id=request.data['session_details']['profile_id'],
+                        status=1).update(status=response):
                     output_json['api_payload'] = {
                         'status': 0,
                         'message': 'Successfully updated request.'
