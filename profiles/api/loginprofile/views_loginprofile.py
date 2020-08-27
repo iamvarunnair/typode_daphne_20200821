@@ -6,6 +6,7 @@ from sessionmanagement.utilities.utility import create_session_from_profile_id
 from sessionmanagement.api.updatesessions.views_updatesessions import update_session
 from ...models import Profile
 from django.core.exceptions import ObjectDoesNotExist
+from ...utilities.utility import login_profile
 
 
 class LoginProfileAPI(APIView):
@@ -14,38 +15,29 @@ class LoginProfileAPI(APIView):
     @authenticate_api
     def post(self, request):
         try:
-            output_json = {
-                'authentication_payload': request.data['authentication_payload'],
-            }
+            output_json = {}
             if validate_json_with_schema_from_file(
                 'profiles\\api\\loginprofile\\schema_loginprofile.json',
                 request.data['api_parameters']
             )['status'] == 0:
-                try:
-                    user = Profile.objects.get(
-                        user_name__exact=request.data['api_parameters']['user_name'],
-                        password__exact=request.data['api_parameters']['password']
-                    )
-                    created_session = create_session_from_profile_id(
-                        user.profile_id)
-                    if created_session['status'] == 0:
-                        output_json['session_payload'] = created_session
-                        output_json['api_payload'] = {
-                            'status': 0,
-                            'message': 'Successfully profile logged in.'
-                        }
-                    else:
-                        output_json['api_payload'] = {
-                            'status': 1,
-                            'message': 'Failed to log profile in.'
-                        }
-                except ObjectDoesNotExist:
+                logged_user = login_profile(
+                    request.data['api_parameters']['user_name'],
+                    request.data['api_parameters']['password']
+                )
+                if logged_user['status'] == 0:
+                    output_json['session_payload'] = logged_user['payload']
+                    output_json['api_payload'] = {
+                        'status': 0,
+                        'message': 'Successfully profile logged in.'
+                    }
+                elif logged_user['status'] == 1:
                     output_json['api_payload'] = {
                         'status': 1,
                         'message': 'Failed to log profile in.'
                     }
-                finally:
-                    return Response(data=output_json, status=status.HTTP_200_OK)
+                else:
+                    raise
+                return Response(data=output_json, status=status.HTTP_200_OK)
             else:
                 return Response(status=status.HTTP_400_BAD_REQUEST)
         except Exception:

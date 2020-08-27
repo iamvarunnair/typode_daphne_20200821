@@ -107,6 +107,9 @@ class Command(BaseCommand):
                 {
                     'status_name': 'Withdrawn',
                 },
+                {
+                    'status_name': 'Removed',
+                },
             ]
         },
     ]
